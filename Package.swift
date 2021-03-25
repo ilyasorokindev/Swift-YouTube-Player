@@ -16,10 +16,7 @@ let package = Package(
             name: "YouTubePlayer",
             dependencies: [],
             path: "YouTubePlayer/YouTubePlayer",
-            exclude: ["Info.plist"],
-            resources: [
-                .process("YTPlayer.html")
-            ]
+            exclude: ["Info.plist"]
         ),
         .testTarget(
             name: "YouTubePlayerTests",

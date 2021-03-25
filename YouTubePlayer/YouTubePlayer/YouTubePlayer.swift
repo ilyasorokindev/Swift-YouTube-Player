@@ -6,9 +6,46 @@
 //  Copyright (c) 2014 Giles Van Gruisen. All rights reserved.
 //
 
-#if canImport(UIKit)
 import UIKit
 import WebKit
+
+let html = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            * { margin: 0; padding: 0; }
+            html, body { width: 100%; height: 100%; }
+        </style>
+    </head>
+    <body>
+        <div id="player"></div>
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <script>
+            var player;
+            YT.ready(function() {
+                     player = new YT.Player('player', %@);
+                     window.location.href = 'ytplayer://onYouTubeIframeAPIReady';
+                     });
+                     function onReady(event) {
+                         window.location.href = 'ytplayer://onReady?data=' + event.data;
+                     }
+
+        function onStateChange(event) {
+            window.location.href = 'ytplayer://onStateChange?data=' + event.data;
+        }
+
+        function onPlaybackQualityChange(event) {
+            window.location.href = 'ytplayer://onPlaybackQualityChange?data=' + event.data;
+        }
+        function onPlayerError(event) {
+            window.location.href = 'ytplayer://onError?data=' + event.data;
+        }
+        </script>
+    </body>
+</html>
+
+"""
 
 public enum YouTubePlayerState: String {
     case Unstarted = "-1"
@@ -239,41 +276,15 @@ open class YouTubePlayerView: UIView, WKNavigationDelegate {
 
     fileprivate func loadWebViewWithParameters(_ parameters: YouTubePlayerParameters) {
 
-        // Get HTML from player file in bundle
-        let rawHTMLString = htmlStringWithFilePath(playerHTMLPath())!
-
         // Get JSON serialized parameters string
         let jsonParameters = serializedJSON(parameters as AnyObject)!
 
         // Replace %@ in rawHTMLString with jsonParameters string
-        let htmlString = rawHTMLString.replacingOccurrences(of: "%@", with: jsonParameters)
+        let htmlString = html.replacingOccurrences(of: "%@", with: jsonParameters)
 
         // Load HTML in web view
         webView.loadHTMLString(htmlString, baseURL: URL(string: baseURL))
     }
-
-    fileprivate func playerHTMLPath() -> String {
-        return Bundle.module.path(forResource: "YTPlayer", ofType: "html")!
-    }
-
-    fileprivate func htmlStringWithFilePath(_ path: String) -> String? {
-
-        do {
-
-            // Get HTML string from path
-            let htmlString = try NSString(contentsOfFile: path, encoding: String.Encoding.utf8.rawValue)
-
-            return htmlString as String
-
-        } catch _ {
-
-            // Error fetching HTML
-            printLog("Lookup error: no HTML file found for path")
-
-            return nil
-        }
-    }
-
 
     // MARK: Player parameters and defaults
 
@@ -377,4 +388,3 @@ private func printLog(_ strings: CustomStringConvertible...) {
     let toPrint = ["[YouTubePlayer]"] + strings
     print(toPrint, separator: " ", terminator: "\n")
 }
-#endif
